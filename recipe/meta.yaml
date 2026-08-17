@@ -1,0 +1,72 @@
+{% set name = "torch-c-dlpack-ext" %}
+{% set version = "0.1.5" %}
+
+package:
+  name: {{ name }}
+  version: {{ version }}
+
+source:
+  url: https://pypi.org/packages/source/t/{{ name }}/{{ name.replace("-", "_") }}-{{ version }}.tar.gz
+  sha256: d06f0357d575d22a168cc77acb9020fc4bae30968ceb6718a055dcbe92bacabe
+
+build:
+  number: 0
+  # pytorch on osx-64 tops out at 2.6 (below the >=2.10 run floor) and
+  # apache-tvm-ffi is not available there either;
+  # py<39 documents upstream's requires-python >=3.9 floor (build matrix starts at 3.10)
+  skip: true  # [(osx and x86_64) or py<39]
+  script: {{ PYTHON }} -m pip install . -vv --no-deps --no-build-isolation
+  # Nothing is compiled or linked against torch (pure-python no-op build, see
+  # host comment); pytorch's run_exports would wrongly pin run to the build-time
+  # minor version. The true runtime constraint is the pytorch >=2.10 floor below.
+  ignore_run_exports_from:
+    - pytorch
+
+requirements:
+  host:
+    - python
+    - pip
+    - setuptools >=61
+    # With pytorch >=2.10 in the build env, upstream's build_backend skips
+    # compiling the C extension (the DLPack exchange API is built into torch
+    # since pytorch#165483) and produces a pure-python no-op package.
+    - pytorch {{ pytorch }}
+    # declared by build_backend.get_requires_for_build_wheel for sdist builds
+    - apache-tvm-ffi >=0.1.1
+  run:
+    - python
+    # Floor 2.10: this build ships no compiled extension, so the package is a
+    # no-op only with torch >=2.10, which provides the DLPack exchange API natively.
+    - pytorch >=2.10
+    # imported by core.py (packaging.version) but missing from upstream requires_dist
+    - packaging
+
+test:
+  imports:
+    - torch_c_dlpack_ext
+  requires:
+    - pip
+  commands:
+    - pip check
+
+about:
+  home: https://github.com/apache/tvm-ffi
+  license: Apache-2.0
+  license_family: Apache
+  license_file:
+    - LICENSE
+    - NOTICE
+  summary: DLPack conversion for PyTorch
+  description: |
+    This package provides an Ahead-Of-Time (AOT) compiled module to support
+    faster DLPack conversion in DLPack v1.2 for PyTorch. Installing this allows
+    users to avoid JIT compilation overhead and also avoid the cases where the
+    user environment does not necessarily have a compiler toolchain to run
+    JIT-compilation. With pytorch >=2.10 the API is provided by torch itself
+    and this package acts as a no-op shim.
+  doc_url: https://tvm.apache.org/ffi/
+  dev_url: https://github.com/apache/tvm-ffi
+
+extra:
+  recipe-maintainers:
+    - xhochy
