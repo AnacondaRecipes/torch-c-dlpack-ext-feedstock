@@ -12,8 +12,9 @@ source:
 build:
   number: 0
   # pytorch on osx-64 tops out at 2.6 (below the >=2.10 run floor) and
-  # apache-tvm-ffi is not available there either
-  skip: true  # [osx and x86_64]
+  # apache-tvm-ffi is not available there either;
+  # py<39 documents upstream's requires-python >=3.9 floor (build matrix starts at 3.10)
+  skip: true  # [(osx and x86_64) or py<39]
   script: {{ PYTHON }} -m pip install . -vv --no-deps --no-build-isolation
   # Nothing is compiled or linked against torch (pure-python no-op build, see
   # host comment); pytorch's run_exports would wrongly pin run to the build-time
