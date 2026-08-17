@@ -6,7 +6,7 @@ package:
   version: {{ version }}
 
 source:
-  url: https://pypi.org/packages/source/t/{{ name }}/torch_c_dlpack_ext-{{ version }}.tar.gz
+  url: https://pypi.org/packages/source/t/{{ name }}/{{ name.replace("-", "_") }}-{{ version }}.tar.gz
   sha256: d06f0357d575d22a168cc77acb9020fc4bae30968ceb6718a055dcbe92bacabe
 
 build:
